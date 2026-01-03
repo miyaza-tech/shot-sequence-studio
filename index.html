@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shot Sequence Studio</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  
+  <style>
+    :root {
+      --bg-primary: #09090b;
+      --bg-secondary: #18181b;
+      --bg-tertiary: #27272a;
+      --bg-card: #1f1f23;
+      --border: #2e2e33;
+      --border-light: #3f3f46;
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent-violet: #8b5cf6;
+      --accent-blue: #3b82f6;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --gradient-main: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans KR', 'Outfit', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+    ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+    .app { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo { display: flex; align-items: center; gap: 12px; }
+
+    .logo-icon {
+      width: 38px; height: 38px;
+      background: var(--gradient-main);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-text {
+      font-size: 18px; font-weight: 700;
+      background: var(--gradient-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .steps { display: flex; align-items: center; gap: 8px; }
+
+    .step {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px; border-radius: var(--radius-md);
+      font-size: 13px; font-weight: 500;
+      color: var(--text-muted); background: transparent;
+    }
+
+    .step.active { background: var(--bg-tertiary); color: var(--text-primary); }
+    .step.completed { color: var(--accent-emerald); }
+
+    .step-number {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--bg-tertiary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600;
+    }
+
+    .step.active .step-number { background: var(--gradient-main); color: white; }
+    .step.completed .step-number { background: var(--accent-emerald); color: white; }
+
+    .step-arrow { color: var(--border-light); font-size: 12px; }
+
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    .content {
+      flex: 1; padding: 32px; overflow-y: auto;
+      display: flex; justify-content: center;
+    }
+
+    .content-inner { width: 100%; max-width: 1000px; }
+
+    .section-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .section-desc { font-size: 15px; color: var(--text-secondary); margin-bottom: 24px; }
+
+    .textarea {
+      width: 100%; min-height: 400px; padding: 20px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace; font-size: 13px;
+      line-height: 1.7; resize: vertical;
+    }
+
+    .textarea:focus { outline: none; border-color: var(--accent-violet); }
+    .textarea::placeholder { color: var(--text-muted); }
+
+    .textarea-actions {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-top: 16px;
+    }
+
+    .char-count { font-size: 13px; color: var(--text-muted); }
+
+    .btn {
+      padding: 12px 24px; border-radius: var(--radius-md);
+      font-family: inherit; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; border: none;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+
+    .btn-primary { background: var(--gradient-main); color: white; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(139, 92, 246, 0.3); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-secondary {
+      background: var(--bg-tertiary); color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--border); }
+
+    .btn-ghost { background: transparent; color: var(--text-secondary); padding: 8px 16px; }
+    .btn-ghost:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+
+    .btn-sm { padding: 8px 14px; font-size: 13px; }
+
+    .style-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+
+    .style-btn {
+      flex: 1; padding: 12px; border-radius: var(--radius-md);
+      border: 1px solid var(--border); background: var(--bg-tertiary);
+      cursor: pointer; text-align: center;
+    }
+
+    .style-btn.active { border-color: var(--accent-violet); background: rgba(139, 92, 246, 0.1); }
+    .style-btn-icon { font-size: 20px; margin-bottom: 4px; }
+    .style-btn-label { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+
+    .split-view {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px; height: calc(100vh - 200px);
+    }
+
+    .split-view-3col {
+      display: grid; 
+      grid-template-columns: 280px 1fr 320px;
+      gap: 16px; 
+      height: calc(100vh - 130px);
+      padding: 16px;
+    }
+
+    @media (max-width: 1200px) {
+      .split-view-3col {
+        grid-template-columns: 1fr 1fr;
+      }
+      .split-view-3col .ai-panel {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .split-view-3col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .split-panel {
+      display: flex; flex-direction: column;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden;
+    }
+
+    .split-panel-header {
+      padding: 16px 20px; background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      font-size: 14px; font-weight: 600;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .split-panel-content { flex: 1; overflow-y: auto; }
+
+    .split-panel-content .textarea {
+      border: none; border-radius: 0;
+      min-height: 100%; height: 100%;
+    }
+
+    .shot-list-container { padding: 16px; }
+
+    .shot-item {
+      background: var(--bg-tertiary); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 14px 16px;
+      margin-bottom: 10px; cursor: pointer;
+    }
+
+    .shot-item:hover { border-color: var(--border-light); }
+    .shot-item.active { border-color: var(--accent-violet); background: rgba(139, 92, 246, 0.1); }
+
+    .shot-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+
+    .shot-number {
+      background: var(--bg-primary); color: var(--accent-violet);
+      font-size: 11px; font-weight: 700; padding: 3px 8px;
+      border-radius: 4px; font-family: 'JetBrains Mono', monospace;
+    }
+
+    .shot-duration { font-size: 12px; color: var(--text-muted); margin-left: auto; }
+    .shot-title { font-size: 14px; font-weight: 500; }
+    .shot-emotion { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+    .detail-panel { padding: 20px; }
+    .detail-section { margin-bottom: 24px; }
+
+    .detail-section-title {
+      font-size: 13px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+    }
+
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .detail-item {
+      background: var(--bg-tertiary); padding: 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    .detail-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+
+    /* Custom Select with Tooltip */
+    .select-wrapper { position: relative; }
+
+    .custom-select {
+      position: relative;
+      width: 100%;
+    }
+
+    .custom-select-trigger {
+      width: 100%; padding: 10px 28px 10px 12px;
+      background: var(--bg-primary); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-primary);
+      font-size: 13px; cursor: pointer;
+      display: flex; align-items: center;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .custom-select-trigger:hover { border-color: var(--border-light); }
+    .custom-select.open .custom-select-trigger { border-color: var(--accent-violet); }
+
+    .custom-select-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--bg-primary);
+      border: 1px solid var(--accent-violet);
+      border-radius: var(--radius-sm);
+      margin-top: 4px;
+      max-height: 280px;
+      overflow-y: auto;
+      z-index: 100;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+
+    .custom-select-option {
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    .custom-select-option:last-child { border-bottom: none; }
+
+    .custom-select-option:hover {
+      background: rgba(139, 92, 246, 0.15);
+    }
+
+    .custom-select-option.selected {
+      background: rgba(139, 92, 246, 0.2);
+    }
+
+    .option-value {
+      font-size: 13px;
+      color: var(--text-primary);
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .option-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    .custom-select-option:hover .option-desc {
+      color: var(--text-secondary);
+    }
+
+    .select-current-desc {
+      font-size: 11px; color: var(--text-muted);
+      margin-top: 4px; line-height: 1.4;
+      min-height: 14px;
+    }
+
+    .ai-section {
+      margin-top: 24px; padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .ai-panel .ai-section {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .ai-panel .detail-panel {
+      padding: 16px;
+    }
+
+    .ai-buttons { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+
+    .ai-btn {
+      padding: 10px 16px; border-radius: var(--radius-md);
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      border: 1px solid var(--border); background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+
+    .ai-btn:hover { border-color: var(--border-light); color: var(--text-primary); }
+    .ai-btn.active {
+      border-color: var(--accent-violet);
+      background: rgba(139, 92, 246, 0.15);
+      color: var(--text-primary);
+    }
+
+    .ai-prompt-textarea:focus {
+      outline: none;
+      border-color: var(--accent-violet) !important;
+    }
+
+    .ai-prompt-box {
+      background: var(--bg-tertiary); border-radius: var(--radius-md);
+      padding: 16px; font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; line-height: 1.6; color: var(--text-primary);
+      margin-bottom: 12px; max-height: 250px; overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .footer-actions {
+      padding: 16px 32px; background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .toast {
+      position: fixed; bottom: 32px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent-emerald); color: white;
+      padding: 14px 28px; border-radius: var(--radius-md);
+      font-weight: 500; font-size: 14px;
+      animation: slideUp 0.3s ease; z-index: 1000;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    /* 로그인 화면 */
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-primary);
+    }
+
+    .login-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .login-logo {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .login-title {
+      font-size: 24px;
+      font-weight: 700;
+      background: var(--gradient-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 15px;
+      font-family: inherit;
+      text-align: center;
+    }
+
+    .login-input:focus {
+      outline: none;
+      border-color: var(--accent-violet);
+    }
+
+    .login-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 15px;
+      margin-top: 8px;
+    }
+
+    .login-error {
+      color: var(--accent-rose);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .empty-state {
+      text-align: center; padding: 60px 40px; color: var(--text-muted);
+    }
+
+    .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+    .empty-text { font-size: 15px; }
+
+    .instructions {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 24px; margin-top: 24px;
+    }
+
+    .instructions-title {
+      font-size: 15px; font-weight: 600; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .instructions-list { list-style: none; }
+
+    .instructions-list li {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+      font-size: 14px; color: var(--text-secondary);
+    }
+
+    .instructions-list li:last-child { border-bottom: none; }
+
+    .step-badge {
+      flex-shrink: 0; width: 24px; height: 24px;
+      background: var(--bg-tertiary); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; color: var(--text-primary);
+    }
+
+    @media (max-width: 900px) {
+      .split-view { grid-template-columns: 1fr; height: auto; }
+      .split-panel { min-height: 400px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // ========================================
+    // 스타일별 프롬프트 힌트 (설정 변경 없이 프롬프트에만 추가)
+    // ========================================
+    const STYLE_HINTS = {
+      "Pixar 3D Animation": {
+        keywords: "Pixar 3D animation style, warm and inviting, expressive characters, soft rounded shapes, vibrant colors",
+        atmosphere: "heartwarming, family-friendly, emotionally expressive"
+      },
+      "Studio Ghibli / Anime": {
+        keywords: "Studio Ghibli style, hand-drawn anime aesthetic, detailed backgrounds, soft watercolor textures, Japanese animation",
+        atmosphere: "whimsical, nostalgic, nature-inspired, dreamlike"
+      },
+      "2D Cartoon": {
+        keywords: "2D cartoon animation, bold outlines, flat colors, exaggerated expressions, classic Disney style",
+        atmosphere: "playful, energetic, stylized"
+      },
+      "Game Cinematic": {
+        keywords: "Unreal Engine 5 quality, game cinematic, photorealistic CGI, dramatic camera angles",
+        atmosphere: "epic, immersive, high-fidelity rendering"
+      },
+      "Cinematic Live Action": {
+        keywords: "35mm film, cinematic live action, anamorphic lens flare, shallow depth of field, professional cinematography",
+        atmosphere: "filmic, dramatic, Hollywood production quality"
+      },
+      "Documentary Realism": {
+        keywords: "documentary style, naturalistic lighting, handheld camera feel, authentic and raw",
+        atmosphere: "realistic, observational, unscripted feel"
+      },
+      "Cyberpunk / Sci-Fi": {
+        keywords: "cyberpunk aesthetic, neon lights, futuristic cityscape, holographic displays, rain-slicked streets",
+        atmosphere: "dystopian, high-tech low-life, noir-influenced"
+      },
+      "Film Noir / Vintage": {
+        keywords: "film noir style, high contrast black and white, dramatic shadows, venetian blind lighting, 1940s aesthetic",
+        atmosphere: "mysterious, moody, classic Hollywood noir"
+      },
+      "Commercial / Product": {
+        keywords: "commercial quality, clean studio lighting, product photography style, sleek and polished",
+        atmosphere: "professional, premium, advertising quality"
+      },
+      "Music Video": {
+        keywords: "music video aesthetic, stylized color grading, dynamic camera movement, artistic lighting",
+        atmosphere: "trendy, visually striking, rhythm-driven"
+      },
+      "Horror / Dark": {
+        keywords: "horror atmosphere, low-key lighting, unsettling angles, dark shadows, desaturated colors",
+        atmosphere: "terrifying, suspenseful, dread-inducing"
+      },
+      "Fantasy / Ethereal": {
+        keywords: "fantasy realm, magical lighting, ethereal glow, mystical atmosphere, enchanted",
+        atmosphere: "otherworldly, dreamlike, magical"
+      },
+      "Concept Art / Illustration": {
+        keywords: "concept art style, painterly quality, artistic composition, illustration aesthetic",
+        atmosphere: "artistic, imaginative, visually rich"
+      },
+      "Stop Motion / Claymation": {
+        keywords: "stop motion animation, claymation texture, handcrafted feel, visible material texture",
+        atmosphere: "tactile, charming, handmade quality"
+      }
+    };
+
+    // ========================================
+    // 전체 가이드 옵션 (설명 포함)
+    // ========================================
+    const GUIDE_OPTIONS = {
+      styles: [
+        { value: "Pixar 3D Animation", desc: "따뜻하고 감성적인 3D 애니메이션, 큰 눈과 표현력 있는 캐릭터" },
+        { value: "Studio Ghibli / Anime", desc: "일본 애니메이션 스타일, 섬세한 배경과 자연 묘사" },
+        { value: "2D Cartoon", desc: "디즈니/카툰 스타일의 2D 애니메이션" },
+        { value: "Game Cinematic", desc: "언리얼/유니티 엔진 느낌의 게임 시네마틱" },
+        { value: "Cinematic Live Action", desc: "영화적 실사 촬영, 35mm 필름 느낌" },
+        { value: "Documentary Realism", desc: "다큐멘터리 스타일, 자연스럽고 현실적인" },
+        { value: "Cyberpunk / Sci-Fi", desc: "네온, 미래 도시, SF 분위기" },
+        { value: "Film Noir / Vintage", desc: "흑백 또는 레트로 필름 느낌, 강한 명암" },
+        { value: "Commercial / Product", desc: "광고, 제품 촬영 스타일, 깔끔하고 세련된" },
+        { value: "Music Video", desc: "뮤직비디오 스타일, 스타일리시하고 역동적" },
+        { value: "Horror / Dark", desc: "공포, 어둡고 불안한 분위기" },
+        { value: "Fantasy / Ethereal", desc: "판타지, 신비롭고 몽환적인 분위기" },
+        { value: "Concept Art / Illustration", desc: "컨셉 아트 스타일, 그림 같은 느낌" },
+        { value: "Stop Motion / Claymation", desc: "스톱모션, 클레이 애니메이션 느낌" }
+      ],
+      camera: {
+        angle: [
+          { value: "Eye Level Shot", desc: "눈높이에서 촬영. 가장 자연스럽고 친근한 시점" },
+          { value: "High Angle", desc: "위에서 아래로 내려다보는 앵글. 대상을 작거나 약하게 표현" },
+          { value: "Low Angle", desc: "아래에서 위로 올려다보는 앵글. 대상을 크고 위엄있게 표현" },
+          { value: "Bird's Eye View / Overhead", desc: "새가 보는 시점. 90도 직각으로 위에서 촬영" },
+          { value: "Worm's Eye View", desc: "벌레 시점. 땅바닥에서 올려다보는 극단적 로우 앵글" },
+          { value: "Over-the-Shoulder / OTS", desc: "어깨 너머 촬영. 대화 장면에서 자주 사용" },
+          { value: "Dutch Angle / Canted Angle", desc: "카메라를 기울여 촬영. 불안감, 긴장감 표현" },
+          { value: "Three-Quarter View", desc: "45도 각도의 3/4 측면 샷. 입체감 강조" },
+          { value: "Side View", desc: "완전 측면 촬영. 프로필 강조" },
+          { value: "Rear View", desc: "뒷모습 촬영. 미스터리, 기대감 연출" },
+          { value: "Top-Down Aerial View", desc: "드론 등 높은 곳에서 촬영. 전체 상황 파악" },
+          { value: "Unique Character Angle", desc: "캐릭터만의 독특한 시점 표현" },
+          { value: "Mirror Reflection Perspective", desc: "거울에 비친 모습 촬영. 이중성 표현" },
+          { value: "First-Person Perspective", desc: "1인칭 시점. 몰입감 극대화" },
+          { value: "Invisible Observer Perspective", desc: "보이지 않는 관찰자 시점. 다큐멘터리 느낌" }
+        ],
+        shot_type: [
+          { value: "Wide Shot / WS", desc: "전체 환경과 인물을 함께 담는 샷" },
+          { value: "Medium Shot / MS", desc: "허리 위 상반신. 표정과 제스처 균형" },
+          { value: "Close-Up / CU", desc: "얼굴이나 물체를 가득 채움. 감정 전달" },
+          { value: "Extreme Close-Up / ECU", desc: "눈, 입술 등 극도로 클로즈업. 강렬한 감정" },
+          { value: "Full Shot / FS", desc: "전신이 다 보이는 샷" },
+          { value: "Two-Shot", desc: "두 사람이 함께 나오는 샷" },
+          { value: "Establishing Shot / ES", desc: "장소와 상황을 설명하는 도입 샷" },
+          { value: "Detail Shot", desc: "특정 물체나 부분을 강조하는 샷" },
+          { value: "Profile Shot", desc: "옆모습 위주의 샷" },
+          { value: "Silhouette Shot", desc: "역광으로 실루엣만 보이는 샷" },
+          { value: "Candid Shot", desc: "자연스러운 순간 포착. 연출되지 않은 느낌" },
+          { value: "Group Interaction", desc: "여러 인물의 상호작용 포착" },
+          { value: "Full Body Shot", desc: "전신 샷. 의상과 자세 강조" },
+          { value: "Multiple Character Focus", desc: "여러 캐릭터에 동시 초점" },
+          { value: "Diagonal Shot", desc: "대각선 구도. 역동성 강조" }
+        ],
+        movement: [
+          { value: "Static", desc: "고정 촬영. 안정감" },
+          { value: "Dolly In", desc: "피사체를 향해 전진. 긴장감, 집중" },
+          { value: "Dolly In (slow)", desc: "천천히 전진. 서서히 고조되는 감정" },
+          { value: "Dolly In (reverse)", desc: "후진. 상황에서 빠져나오는 느낌" },
+          { value: "Tracking Shot", desc: "피사체를 따라 이동. 동행감" },
+          { value: "Arc Shot", desc: "피사체 주위를 원형으로 회전. 360도 매트릭스 효과" },
+          { value: "Panning / Pan", desc: "좌우로 회전. 공간 훑기" },
+          { value: "Tilt", desc: "위아래로 회전. 대상의 높이 강조" },
+          { value: "Crane Shot", desc: "크레인으로 위아래 이동. 웅장함" },
+          { value: "Handheld / Shaky Cam", desc: "손으로 들고 촬영. 긴박감, 현장감" },
+          { value: "Steadicam", desc: "안정화 장비. 부드러운 이동" },
+          { value: "Dolly Zoom / Vertigo Effect", desc: "줌과 이동 반대로. 현기증 효과" },
+          { value: "Cinematic Zoom-In", desc: "영화적 줌인. 감정 고조" },
+          { value: "Crash Zoom", desc: "빠른 줌인. 충격, 놀람" },
+          { value: "Long Take / Oner", desc: "컷 없이 긴 촬영. 몰입감" },
+          { value: "Low Angle Tracking", desc: "낮은 앵글로 따라가기. 속도감" },
+          { value: "Snorricam / Chest Rig", desc: "배우 몸에 장착. 공황, 취함 표현" }
+        ],
+        focus: [
+          { value: "Shallow Depth of Field / Bokeh", desc: "얕은 심도. 배경 흐림으로 피사체 강조" },
+          { value: "Deep Focus", desc: "깊은 심도. 전경부터 배경까지 선명" },
+          { value: "Rack Focus", desc: "초점 전환. A에서 B로 시선 유도" },
+          { value: "Soft Focus", desc: "부드러운 초점. 몽환적, 로맨틱" },
+          { value: "Split Diopter", desc: "분할 초점. 전경과 배경 동시 선명" }
+        ],
+        lens: [
+          { value: "Wide Angle Lens", desc: "광각 렌즈(24mm 이하). 넓은 공간감" },
+          { value: "Standard Lens (35-50mm)", desc: "표준 렌즈. 눈에 가장 자연스러움" },
+          { value: "Portrait Lens (85mm)", desc: "인물용 렌즈. 적절한 압축감" },
+          { value: "Telephoto Lens", desc: "망원 렌즈. 압축 효과, 원거리 촬영" },
+          { value: "Macro Lens", desc: "접사 렌즈. 작은 것을 크게 확대" },
+          { value: "Anamorphic Lens", desc: "아나모픽 렌즈. 시네마틱 플레어, 넓은 화각" },
+          { value: "Fisheye Lens", desc: "어안 렌즈. 극단적 왜곡, 독특한 시점" },
+          { value: "Tilt-Shift", desc: "틸트시프트. 미니어처 효과, 선택적 초점" }
+        ]
+      },
+      lighting: {
+        technique: [
+          { value: "Rembrandt Lighting", desc: "한쪽 뺨에 삼각형 빛. 클래식한 인물 조명" },
+          { value: "Soft Lighting", desc: "부드럽고 그림자 적은 조명. 편안함" },
+          { value: "Hard Lighting", desc: "강한 명암 대비. 드라마틱" },
+          { value: "Backlighting", desc: "역광. 실루엣, 신비로운 느낌" },
+          { value: "Rim Lighting", desc: "가장자리 빛. 피사체 분리, 신성함" },
+          { value: "Silhouette Lighting", desc: "완전 역광. 형태만 보이는 실루엣" },
+          { value: "Practical Lighting", desc: "화면 내 실제 광원(램프, 네온 등) 활용" },
+          { value: "Candlelight", desc: "촛불 조명. 따뜻하고 낭만적" },
+          { value: "Golden Hour", desc: "해질녘 황금빛. 따뜻하고 감성적" },
+          { value: "Blue Hour", desc: "일출/일몰 전후 푸른빛 시간대" },
+          { value: "Volumetric Lighting / God Rays", desc: "빛줄기가 보이는 신비로운 조명" },
+          { value: "Low Key Lighting", desc: "어두운 톤 위주. 미스터리, 누아르" },
+          { value: "High Key Lighting", desc: "밝고 그림자 적은 톤. 밝고 경쾌" },
+          { value: "Split Lighting", desc: "얼굴 반반 조명. 이중성 표현" },
+          { value: "Butterfly Lighting", desc: "위에서 내리쬐는 조명. 코 아래 나비 그림자" },
+          { value: "Beautiful Lighting", desc: "피부를 아름답게 보이는 조명" },
+          { value: "Chiaroscuro / Noir Lighting", desc: "극단적 명암 대비. 르네상스/누아르" },
+          { value: "Ambient Lighting", desc: "자연스러운 주변광. 환경 조명" },
+          { value: "Accent Lighting", desc: "특정 부분만 강조하는 조명" },
+          { value: "Fill Lighting", desc: "그림자를 채우는 보조 조명" },
+          { value: "Key Lighting", desc: "주 광원. 가장 밝은 조명" },
+          { value: "Neon Light", desc: "네온 조명. 사이버펑크, 도시적" },
+          { value: "Moonlight", desc: "달빛 느낌. 차갑고 신비로운" },
+          { value: "Dappled Light", desc: "나뭇잎 사이로 비치는 얼룩진 빛" },
+          { value: "Window Light", desc: "창문으로 들어오는 자연광" },
+          { value: "Cinematic Lighting", desc: "영화적인 무드의 조명 전반" },
+          { value: "Moody Lighting", desc: "분위기 있는 조명. 감정 강조" },
+          { value: "Spotlight", desc: "스포트라이트. 한 점에 집중" },
+          { value: "Strobe Lighting", desc: "스트로브 조명. 순간 포착" },
+          { value: "Diffused Light", desc: "확산광. 부드럽고 그림자 적음" },
+          { value: "Reflected Light", desc: "반사된 빛. 간접적이고 부드러움" },
+          { value: "Crepuscular Rays", desc: "구름 사이로 비치는 빛줄기" },
+          { value: "Dawn Lighting", desc: "새벽 조명. 차갑고 신선한" },
+          { value: "Dusk Lighting", desc: "황혼 조명. 따뜻하고 노스탤직" },
+          { value: "Sunset Lighting", desc: "일몰 조명. 붉고 드라마틱" },
+          { value: "Overcast Light", desc: "흐린 날 조명. 부드럽고 균일" },
+          { value: "Twilight Light", desc: "박명 조명. 신비롭고 푸른" },
+          { value: "Ethereal Lighting", desc: "초자연적이고 천상의 빛" },
+          { value: "Colored Lighting", desc: "색상 있는 조명. 분위기 연출" },
+          { value: "Street Light", desc: "가로등 조명. 도시 야경" },
+          { value: "Pattern Light", desc: "패턴이 있는 빛. 블라인드 등" },
+          { value: "Lens Flare", desc: "렌즈 플레어. 빛 번짐 효과" }
+        ],
+        quality: [
+          { value: "Soft", desc: "부드럽고 그림자가 흐릿한" },
+          { value: "Hard", desc: "날카롭고 그림자가 선명한" },
+          { value: "Diffused", desc: "확산되어 균일한" },
+          { value: "Dramatic", desc: "극적인 명암 대비" },
+          { value: "Natural", desc: "자연광처럼 자연스러운" },
+          { value: "Stylized", desc: "스타일화된, 연출된" }
+        ],
+        direction: [
+          { value: "Front", desc: "정면에서 비추는 빛" },
+          { value: "Side", desc: "측면에서 비추는 빛. 입체감" },
+          { value: "Back", desc: "뒤에서 비추는 역광" },
+          { value: "Top", desc: "위에서 비추는 빛" },
+          { value: "Bottom", desc: "아래에서 비추는 빛. 공포 연출" },
+          { value: "45-degree", desc: "45도 각도. 가장 일반적" },
+          { value: "Multi-directional", desc: "여러 방향에서 동시에" }
+        ],
+        color_temperature: [
+          { value: "Warm (2700-3200K)", desc: "따뜻한 주황/노란빛. 촛불, 일몰" },
+          { value: "Neutral (5000-5600K)", desc: "중립적인 흰색. 주간 자연광" },
+          { value: "Cool (6500K+)", desc: "차가운 푸른빛. 그늘, 흐린 날" },
+          { value: "Mixed", desc: "여러 색온도 혼합. 복잡한 분위기" },
+          { value: "Golden Hour (3500K)", desc: "황금빛 따뜻한 톤" },
+          { value: "Blue Hour (9000K+)", desc: "푸른 시간대의 차가운 톤" },
+          { value: "Tungsten (3200K)", desc: "텅스텐 조명. 실내 느낌" },
+          { value: "Daylight (5600K)", desc: "주간 자연광과 동일" }
+        ]
+      },
+      vfx: {
+        speed: [
+          { value: "Normal", desc: "일반 속도" },
+          { value: "Slow Motion (75%)", desc: "약간 느린. 우아함 강조" },
+          { value: "Slow Motion (50%)", desc: "절반 속도. 드라마틱 순간" },
+          { value: "Slow Motion (25%)", desc: "극 슬로우. 결정적 순간 강조" },
+          { value: "Time-lapse", desc: "타임랩스. 시간 압축" },
+          { value: "Freeze Frame", desc: "정지 화면. 순간 포착" },
+          { value: "Speed Ramp", desc: "속도 변화. 느림→빠름 전환" }
+        ],
+        effects: [
+          { value: "Lens Flare", desc: "렌즈 플레어. 빛 번짐" },
+          { value: "Bloom/Glow", desc: "빛 번짐. 몽환적" },
+          { value: "Motion Blur", desc: "움직임 흐림. 속도감" },
+          { value: "Depth of Field", desc: "심도 효과. 초점 외 흐림" },
+          { value: "Film Grain", desc: "필름 입자. 빈티지 느낌" },
+          { value: "Color Grading", desc: "색보정. 분위기 연출" },
+          { value: "Particles", desc: "파티클 효과. 눈, 먼지 등" },
+          { value: "Volumetric Fog", desc: "체적 안개. 신비로운" },
+          { value: "Light Rays", desc: "빛줄기 효과" },
+          { value: "Chromatic Aberration", desc: "색수차. 렌즈 왜곡 느낌" }
+        ]
+      },
+      color: {
+        contrast: [
+          { value: "High", desc: "높은 대비. 극적이고 선명" },
+          { value: "Medium", desc: "중간 대비. 균형잡힌" },
+          { value: "Low", desc: "낮은 대비. 부드럽고 파스텔" }
+        ]
+      }
+    };
+
+    // 변환 프롬프트 (스타일 중립)
+    const CONVERSION_PROMPT = (story) => `다음 스토리를 JSON 샷 시퀀스로 변환해주세요.
+
+## 출력 형식:
+\`\`\`json
+{
+  "project": {
+    "title": "프로젝트 제목",
+    "total_duration": "30s",
+    "aspect_ratio": "2.39:1"
+  },
+  "sequence": [
+    {
+      "shot": "1",
+      "title": "샷 제목",
+      "section": "시간대: 섹션명",
+      "duration": "1s",
+      "emotion": "감정/분위기",
+      "scene": { "location": "장소", "time": "시간", "weather": "날씨", "environment": "환경" },
+      "camera": { "angle": "Eye Level Shot", "shot_type": "Wide Shot / WS", "movement": "Dolly In", "lens": "50mm", "focus": {"type": "Shallow Depth of Field / Bokeh", "target": "피사체"} },
+      "subject": { "description": "피사체 설명", "motion": {"action": "동작"}, "costume": "의상", "expression": "표정" },
+      "lighting": { "technique": "Rembrandt Lighting", "quality": "Soft", "direction": "Side", "color_temperature": "Warm", "mood": "분위기" },
+      "color": { "palette": ["색상1", "색상2"], "grade": "색보정", "contrast": "High/Medium/Low" },
+      "audio": { "music": "음악", "sfx": ["효과음"], "ambient": "환경음" },
+      "vfx": { "effects": ["효과"], "speed": "Normal/Slow Motion (50%)" }
+    }
+  ]
+}
+\`\`\`
+
+## 스토리:
+${story}
+
+---
+JSON 코드만 출력하세요.`;
+
+    // JSON 프롬프트 생성 (스타일 힌트 포함)
+    const generateJSONPrompt = {
+      runway: (shot, style) => {
+        const hint = STYLE_HINTS[style] || {};
+        return {
+          shot_number: shot.shot || "",
+          shot_title: shot.title || "",
+          style: hint.keywords || style,
+          atmosphere: hint.atmosphere || "",
+          scene: shot.scene?.location || "",
+          subject: shot.subject?.description || "",
+          action: shot.subject?.motion?.action || "",
+          camera: {
+            shot_type: shot.camera?.shot_type || "",
+            angle: shot.camera?.angle || "",
+            movement: shot.camera?.movement || "Static",
+            lens: shot.camera?.lens || ""
+          },
+          lighting: {
+            technique: shot.lighting?.technique || "",
+            mood: shot.lighting?.mood || ""
+          },
+          color_palette: shot.color?.palette || [],
+          emotion: shot.emotion || "",
+          duration: shot.duration || "4s",
+          vfx_speed: shot.vfx?.speed || "Normal",
+          audio_reference: {
+            music: shot.audio?.music || "",
+            sfx: shot.audio?.sfx || [],
+            ambient: shot.audio?.ambient || "",
+            _note: "참고용 - 별도 사운드 작업 필요"
+          }
+        };
+      },
+      kling: (shot, style) => {
+        const hint = STYLE_HINTS[style] || {};
+        return {
+          shot_number: shot.shot || "",
+          shot_title: shot.title || "",
+          style: hint.keywords || style,
+          atmosphere: hint.atmosphere || "",
+          character: shot.subject?.description || "",
+          action: shot.subject?.motion?.action || "",
+          expression: shot.subject?.expression || "",
+          scene: shot.scene?.location || "",
+          camera: shot.camera?.shot_type || "",
+          lighting: shot.lighting?.technique || "",
+          audio_reference: {
+            music: shot.audio?.music || "",
+            sfx: shot.audio?.sfx || [],
+            ambient: shot.audio?.ambient || "",
+            _note: "참고용 - 별도 사운드 작업 필요"
+          }
+        };
+      },
+      sora: (shot, style) => {
+        const hint = STYLE_HINTS[style] || {};
+        return {
+          shot_number: shot.shot || "",
+          shot_title: shot.title || "",
+          style: hint.keywords || style,
+          atmosphere: hint.atmosphere || "",
+          scene: { 
+            location: shot.scene?.location, 
+            time: shot.scene?.time,
+            environment: shot.scene?.environment
+          },
+          subject: { 
+            description: shot.subject?.description, 
+            action: shot.subject?.motion?.action,
+            expression: shot.subject?.expression
+          },
+          camera: { 
+            shot_type: shot.camera?.shot_type, 
+            angle: shot.camera?.angle, 
+            movement: shot.camera?.movement,
+            lens: shot.camera?.lens
+          },
+          lighting: { 
+            technique: shot.lighting?.technique, 
+            quality: shot.lighting?.quality,
+            mood: shot.lighting?.mood 
+          },
+          color: shot.color?.palette || [],
+          emotion: shot.emotion,
+          duration: shot.duration || "5s",
+          audio_reference: {
+            music: shot.audio?.music || "",
+            sfx: shot.audio?.sfx || [],
+            ambient: shot.audio?.ambient || "",
+            _note: "참고용 - 별도 사운드 작업 필요"
+          }
+        };
+      },
+      pika: (shot, style) => {
+        const hint = STYLE_HINTS[style] || {};
+        return {
+          shot_number: shot.shot || "",
+          shot_title: shot.title || "",
+          style: hint.keywords || style,
+          subject: shot.subject?.description || "",
+          action: shot.subject?.motion?.action || "",
+          scene: shot.scene?.location || "",
+          emotion: shot.emotion || "",
+          camera_movement: shot.camera?.movement || "Static",
+          audio_reference: {
+            music: shot.audio?.music || "",
+            sfx: shot.audio?.sfx || [],
+            _note: "참고용 - 별도 사운드 작업 필요"
+          }
+        };
+      }
+    };
+    
+    // 복사용 프롬프트 생성 (audio_reference 제외)
+    const generateCleanPrompt = {
+      runway: (shot, style) => {
+        const hint = STYLE_HINTS[style] || {};
+        return {
+          shot_number: shot.shot || "",
+          shot_title: shot.title || "",
+          style: hint.keywords || style,
+          atmosphere: hint.atmosphere || "",
+          scene: shot.scene?.location || "",
+          subject: shot.subject?.description || "",
+          action: shot.subject?.motion?.action || "",
+          camera: {
+            shot_type: shot.camera?.shot_type || "",
+            angle: shot.camera?.angle || "",
+            movement: shot.camera?.movement || "Static",
+            lens: shot.camera?.lens || ""
+          },
+          lighting: {
+            technique: shot.lighting?.technique || "",
+            mood: shot.lighting?.mood || ""
+          },
+          color_palette: shot.color?.palette || [],
+          emotion: shot.emotion || "",
+          duration: shot.duration || "4s",
+          vfx_speed: shot.vfx?.speed || "Normal"
+        };
+      },
+      kling: (shot, style) => {
+        const hint = STYLE_HINTS[style] || {};
+        return {
+          shot_number: shot.shot || "",
+          shot_title: shot.title || "",
+          style: hint.keywords || style,
+          atmosphere: hint.atmosphere || "",
+          character: shot.subject?.description || "",
+          action: shot.subject?.motion?.action || "",
+          expression: shot.subject?.expression || "",
+          scene: shot.scene?.location || "",
+          camera: shot.camera?.shot_type || "",
+          lighting: shot.lighting?.technique || ""
+        };
+      },
+      sora: (shot, style) => {
+        const hint = STYLE_HINTS[style] || {};
+        return {
+          shot_number: shot.shot || "",
+          shot_title: shot.title || "",
+          style: hint.keywords || style,
+          atmosphere: hint.atmosphere || "",
+          scene: { 
+            location: shot.scene?.location, 
+            time: shot.scene?.time,
+            environment: shot.scene?.environment
+          },
+          subject: { 
+            description: shot.subject?.description, 
+            action: shot.subject?.motion?.action,
+            expression: shot.subject?.expression
+          },
+          camera: { 
+            shot_type: shot.camera?.shot_type, 
+            angle: shot.camera?.angle, 
+            movement: shot.camera?.movement,
+            lens: shot.camera?.lens
+          },
+          lighting: { 
+            technique: shot.lighting?.technique, 
+            quality: shot.lighting?.quality,
+            mood: shot.lighting?.mood 
+          },
+          color: shot.color?.palette || [],
+          emotion: shot.emotion,
+          duration: shot.duration || "5s"
+        };
+      },
+      pika: (shot, style) => {
+        const hint = STYLE_HINTS[style] || {};
+        return {
+          shot_number: shot.shot || "",
+          shot_title: shot.title || "",
+          style: hint.keywords || style,
+          subject: shot.subject?.description || "",
+          action: shot.subject?.motion?.action || "",
+          scene: shot.scene?.location || "",
+          emotion: shot.emotion || "",
+          camera_movement: shot.camera?.movement || "Static"
+        };
+      }
+    };
+
+    // Custom Select Component with Hover Tooltip
+    function SelectWithDesc({ label, options, value, onChange }) {
+      const [isOpen, setIsOpen] = React.useState(false);
+      const ref = React.useRef(null);
+      const selectedOption = options.find(o => o.value === value) || options[0];
+      
+      // 외부 클릭 시 닫기
+      React.useEffect(() => {
+        const handleClickOutside = (e) => {
+          if (ref.current && !ref.current.contains(e.target)) {
+            setIsOpen(false);
+          }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+      }, []);
+      
+      return (
+        <div className="detail-item" style={label ? {} : {background: 'transparent', padding: 0}}>
+          {label && <div className="detail-label">{label}</div>}
+          <div className={`custom-select ${isOpen ? 'open' : ''}`} ref={ref}>
+            <div 
+              className="custom-select-trigger"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              {selectedOption?.value || '선택하세요'}
+            </div>
+            {isOpen && (
+              <div className="custom-select-dropdown">
+                {options.map(opt => (
+                  <div
+                    key={opt.value}
+                    className={`custom-select-option ${opt.value === value ? 'selected' : ''}`}
+                    onClick={() => {
+                      onChange(opt.value);
+                      setIsOpen(false);
+                    }}
+                  >
+                    <div className="option-value">{opt.value}</div>
+                    <div className="option-desc">{opt.desc}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="select-current-desc">{selectedOption?.desc || ''}</div>
+        </div>
+      );
+    }
+
+    function App() {
+      // 로그인 상태
+      const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        return localStorage.getItem('sss_auth') === 'authenticated';
+      });
+      const [password, setPassword] = useState('');
+      const [loginError, setLoginError] = useState('');
+      
+      const handleLogin = () => {
+        if (password === 'dhWkddk') {
+          localStorage.setItem('sss_auth', 'authenticated');
+          setIsLoggedIn(true);
+          setLoginError('');
+        } else {
+          setLoginError('비밀번호가 틀렸습니다');
+        }
+      };
+      
+      const handleLogout = () => {
+        localStorage.removeItem('sss_auth');
+        setIsLoggedIn(false);
+        setPassword('');
+      };
+      
+      const handleKeyPress = (e) => {
+        if (e.key === 'Enter') handleLogin();
+      };
+
+      const [step, setStep] = useState(1);
+      const [storyText, setStoryText] = useState('');
+      const [jsonText, setJsonText] = useState('');
+      const [parsedData, setParsedData] = useState(null);
+      const [selectedShot, setSelectedShot] = useState(null);
+      const [selectedShotIndex, setSelectedShotIndex] = useState(null);
+      const [selectedAI, setSelectedAI] = useState('runway');
+      const [style, setStyle] = useState('Pixar 3D Animation');
+      const [editedPrompt, setEditedPrompt] = useState('');
+      const [isPromptEdited, setIsPromptEdited] = useState(false);
+      const [toast, setToast] = useState(null);
+
+      const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
+      const copyToClipboard = (text, label) => { navigator.clipboard.writeText(text); showToast(`${label} 복사 완료!`); };
+
+      const handleParseJSON = () => {
+        try {
+          let jsonStr = jsonText;
+          const match = jsonText.match(/```json\s*([\s\S]*?)\s*```/);
+          if (match) jsonStr = match[1];
+          const data = JSON.parse(jsonStr);
+          setParsedData(data);
+          if (data.sequence?.length > 0) {
+            setSelectedShot(data.sequence[0]);
+            setSelectedShotIndex(0);
+          }
+          setStep(3);
+          showToast('JSON 파싱 완료!');
+        } catch { showToast('JSON 파싱 실패'); }
+      };
+
+      const updateShotField = (category, field, value) => {
+        if (selectedShotIndex === null) return;
+        const newData = { ...parsedData };
+        const shot = { ...newData.sequence[selectedShotIndex] };
+        
+        if (category === 'camera_focus') {
+          shot.camera = { ...shot.camera, focus: { ...shot.camera?.focus, type: value } };
+        } else if (['camera', 'lighting', 'vfx', 'color'].includes(category)) {
+          shot[category] = { ...shot[category], [field]: value };
+        }
+        
+        newData.sequence[selectedShotIndex] = shot;
+        setParsedData(newData);
+        setSelectedShot(shot);
+        setIsPromptEdited(false); // 설정 변경 시 편집 상태 리셋
+      };
+
+      const conversionPrompt = CONVERSION_PROMPT(storyText);
+      const generatedPromptObj = selectedShot ? generateJSONPrompt[selectedAI](selectedShot, style) : null;
+      
+      // 하이라이트 표시를 위한 포맷팅
+      const formatPromptWithHighlight = (obj) => {
+        if (!obj) return '';
+        const lines = JSON.stringify(obj, null, 2).split('\n');
+        return lines.map(line => {
+          if (line.includes('"style"') || line.includes('"atmosphere"')) {
+            return line + '  ← 🎨 스타일 자동생성';
+          }
+          if (line.includes('"audio_reference"')) {
+            return line + '  ← 🔊 참고용 (복사 시 제외)';
+          }
+          return line;
+        }).join('\n');
+      };
+      
+      const generatedPrompt = formatPromptWithHighlight(generatedPromptObj);
+      const jsonPrompt = isPromptEdited ? editedPrompt : generatedPrompt;
+      
+      // 복사할 때는 하이라이트와 audio_reference 제거
+      const cleanPromptForCopy = () => {
+        if (isPromptEdited) return editedPrompt;
+        const cleanObj = generateCleanPrompt[selectedAI](selectedShot, style);
+        return JSON.stringify(cleanObj, null, 2);
+      };
+      
+      // 샷이나 AI 변경 시 편집 상태 리셋
+      React.useEffect(() => {
+        setIsPromptEdited(false);
+        setEditedPrompt('');
+      }, [selectedShotIndex, selectedAI, style]);
+
+      return (
+        <div className="app">
+          {!isLoggedIn ? (
+            // 로그인 화면
+            <div className="login-container">
+              <div className="login-box">
+                <div className="login-logo">
+                  <div className="logo-icon" style={{width: '48px', height: '48px', fontSize: '24px'}}>🎬</div>
+                </div>
+                <h1 className="login-title">Shot Sequence Studio</h1>
+                <p className="login-subtitle">관리자 로그인이 필요합니다</p>
+                
+                <div className="login-form">
+                  <input
+                    type="password"
+                    className="login-input"
+                    placeholder="비밀번호 입력"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    autoFocus
+                  />
+                  {loginError && <div className="login-error">{loginError}</div>}
+                  <button className="btn btn-primary login-btn" onClick={handleLogin}>
+                    로그인
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+          // 메인 앱
+          <>
+          <header className="header">
+            <div className="logo">
+              <div className="logo-icon">🎬</div>
+              <span className="logo-text">Shot Sequence Studio</span>
+            </div>
+            <div className="steps">
+              <div className={`step ${step === 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
+                <span className="step-number">{step > 1 ? '✓' : '1'}</span><span>스토리 입력</span>
+              </div>
+              <span className="step-arrow">→</span>
+              <div className={`step ${step === 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}>
+                <span className="step-number">{step > 2 ? '✓' : '2'}</span><span>JSON 변환</span>
+              </div>
+              <span className="step-arrow">→</span>
+              <div className={`step ${step === 3 ? 'active' : ''}`}>
+                <span className="step-number">3</span><span>프롬프트 생성</span>
+              </div>
+            </div>
+            <button className="btn btn-ghost btn-sm" onClick={handleLogout}>로그아웃</button>
+          </header>
+
+          <main className="main">
+            {step === 1 && (
+              <div className="content">
+                <div className="content-inner">
+                  <h1 className="section-title">📝 스토리 입력</h1>
+                  <p className="section-desc">영상 스토리를 입력하세요. 시간대별 비주얼, 오디오, 감정 등을 포함하면 좋습니다.</p>
+                  <textarea className="textarea" placeholder="스토리를 입력하세요..." value={storyText} onChange={(e) => setStoryText(e.target.value)} />
+                  <div className="textarea-actions">
+                    <span className="char-count">{storyText.length} 자</span>
+                    <button className="btn btn-primary" disabled={storyText.length < 50} onClick={() => setStep(2)}>다음 단계 →</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="content">
+                <div className="content-inner">
+                  <h1 className="section-title">🔄 JSON 변환</h1>
+                  <p className="section-desc">프롬프트를 Claude에 붙여넣고, 결과를 오른쪽에 붙여넣으세요.</p>
+                  <div className="split-view">
+                    <div className="split-panel">
+                      <div className="split-panel-header">
+                        <span>📋 변환 프롬프트</span>
+                        <button className="btn btn-sm btn-secondary" onClick={() => copyToClipboard(conversionPrompt, '프롬프트')}>📋 복사</button>
+                      </div>
+                      <div className="split-panel-content">
+                        <textarea className="textarea" value={conversionPrompt} readOnly />
+                      </div>
+                    </div>
+                    <div className="split-panel">
+                      <div className="split-panel-header"><span>📥 결과 JSON</span></div>
+                      <div className="split-panel-content">
+                        <textarea className="textarea" placeholder="Claude의 응답 JSON을 붙여넣으세요..." value={jsonText} onChange={(e) => setJsonText(e.target.value)} />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="instructions">
+                    <div className="instructions-title">📌 사용 방법</div>
+                    <ul className="instructions-list">
+                      <li><span className="step-badge">1</span><span>"복사" 버튼 클릭</span></li>
+                      <li><span className="step-badge">2</span><span>새 Claude 대화창에 붙여넣기</span></li>
+                      <li><span className="step-badge">3</span><span>결과 JSON을 오른쪽에 붙여넣기</span></li>
+                      <li><span className="step-badge">4</span><span>"JSON 파싱" 버튼 클릭</span></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 3 && parsedData && (
+              <div className="content" style={{padding: '0'}}>
+                <div className="split-view-3col">
+                  {/* 왼쪽: 샷 리스트 */}
+                  <div className="split-panel">
+                    <div className="split-panel-header">🎬 샷 리스트 ({parsedData.sequence?.length || 0})</div>
+                    <div className="split-panel-content">
+                      <div className="shot-list-container">
+                        {parsedData.sequence?.map((shot, i) => (
+                          <div key={i} className={`shot-item ${selectedShotIndex === i ? 'active' : ''}`}
+                            onClick={() => { setSelectedShot(shot); setSelectedShotIndex(i); }}>
+                            <div className="shot-header">
+                              <span className="shot-number">#{shot.shot}</span>
+                              <span className="shot-duration">{shot.duration}</span>
+                            </div>
+                            <div className="shot-title">{shot.title}</div>
+                            <div className="shot-emotion">{shot.emotion}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 중앙: 상세 정보 편집 */}
+                  <div className="split-panel">
+                    <div className="split-panel-header">✏️ 상세 정보</div>
+                    <div className="split-panel-content">
+                      {selectedShot ? (
+                        <div className="detail-panel">
+                          <h2 style={{marginBottom: '16px', fontSize: '16px'}}>Shot {selectedShot.shot}: {selectedShot.title}</h2>
+
+                          <div className="detail-section">
+                            <div className="detail-section-title">📷 카메라</div>
+                            <div className="detail-grid">
+                              <SelectWithDesc label="앵글" options={GUIDE_OPTIONS.camera.angle}
+                                value={selectedShot.camera?.angle} onChange={(v) => updateShotField('camera', 'angle', v)} />
+                              <SelectWithDesc label="샷 타입" options={GUIDE_OPTIONS.camera.shot_type}
+                                value={selectedShot.camera?.shot_type} onChange={(v) => updateShotField('camera', 'shot_type', v)} />
+                              <SelectWithDesc label="무빙" options={GUIDE_OPTIONS.camera.movement}
+                                value={selectedShot.camera?.movement} onChange={(v) => updateShotField('camera', 'movement', v)} />
+                              <SelectWithDesc label="초점" options={GUIDE_OPTIONS.camera.focus}
+                                value={selectedShot.camera?.focus?.type} onChange={(v) => updateShotField('camera_focus', 'type', v)} />
+                              <SelectWithDesc label="렌즈" options={GUIDE_OPTIONS.camera.lens}
+                                value={selectedShot.camera?.lens} onChange={(v) => updateShotField('camera', 'lens', v)} />
+                            </div>
+                          </div>
+
+                          <div className="detail-section">
+                            <div className="detail-section-title">💡 조명</div>
+                            <div className="detail-grid">
+                              <SelectWithDesc label="기법" options={GUIDE_OPTIONS.lighting.technique}
+                                value={selectedShot.lighting?.technique} onChange={(v) => updateShotField('lighting', 'technique', v)} />
+                              <SelectWithDesc label="품질" options={GUIDE_OPTIONS.lighting.quality}
+                                value={selectedShot.lighting?.quality} onChange={(v) => updateShotField('lighting', 'quality', v)} />
+                              <SelectWithDesc label="방향" options={GUIDE_OPTIONS.lighting.direction}
+                                value={selectedShot.lighting?.direction} onChange={(v) => updateShotField('lighting', 'direction', v)} />
+                              <SelectWithDesc label="색온도" options={GUIDE_OPTIONS.lighting.color_temperature}
+                                value={selectedShot.lighting?.color_temperature} onChange={(v) => updateShotField('lighting', 'color_temperature', v)} />
+                            </div>
+                          </div>
+
+                          <div className="detail-section">
+                            <div className="detail-section-title">✨ VFX & 색상</div>
+                            <div className="detail-grid">
+                              <SelectWithDesc label="속도" options={GUIDE_OPTIONS.vfx.speed}
+                                value={selectedShot.vfx?.speed} onChange={(v) => updateShotField('vfx', 'speed', v)} />
+                              <SelectWithDesc label="대비" options={GUIDE_OPTIONS.color.contrast}
+                                value={selectedShot.color?.contrast} onChange={(v) => updateShotField('color', 'contrast', v)} />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="empty-state">
+                          <div className="empty-icon">👈</div>
+                          <div className="empty-text">샷을 선택하세요</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 오른쪽: AI 프롬프트 */}
+                  <div className="split-panel ai-panel">
+                    <div className="split-panel-header">🤖 AI 프롬프트</div>
+                    <div className="split-panel-content">
+                      {selectedShot ? (
+                        <div className="detail-panel">
+                          <div className="ai-section">
+                            <div className="detail-section">
+                              <div className="detail-section-title">스타일</div>
+                              <SelectWithDesc 
+                                label="" 
+                                options={GUIDE_OPTIONS.styles}
+                                value={style} 
+                                onChange={(v) => setStyle(v)} 
+                              />
+                            </div>
+                            
+                            <div className="detail-section-title" style={{marginTop: '16px'}}>AI 플랫폼</div>
+                            <div className="ai-buttons">
+                              {['runway', 'kling', 'sora', 'pika'].map(ai => (
+                                <button key={ai} className={`ai-btn ${selectedAI === ai ? 'active' : ''}`} onClick={() => setSelectedAI(ai)}>
+                                  {ai.charAt(0).toUpperCase() + ai.slice(1)}
+                                </button>
+                              ))}
+                            </div>
+                            
+                            <div className="detail-section-title" style={{marginTop: '16px'}}>
+                              생성된 프롬프트 
+                              {isPromptEdited && <span style={{color: 'var(--accent-amber)', marginLeft: '8px', fontSize: '10px'}}>(수정됨)</span>}
+                            </div>
+                            <textarea
+                              className="ai-prompt-textarea"
+                              value={jsonPrompt}
+                              onChange={(e) => {
+                                setEditedPrompt(e.target.value);
+                                setIsPromptEdited(true);
+                              }}
+                              style={{
+                                width: '100%',
+                                height: 'calc(100vh - 500px)',
+                                minHeight: '180px',
+                                background: 'var(--bg-tertiary)',
+                                border: isPromptEdited ? '1px solid var(--accent-amber)' : '1px solid var(--border)',
+                                borderRadius: 'var(--radius-md)',
+                                padding: '12px',
+                                fontFamily: "'JetBrains Mono', monospace",
+                                fontSize: '11px',
+                                lineHeight: '1.6',
+                                color: 'var(--text-primary)',
+                                resize: 'none'
+                              }}
+                            />
+                            <div style={{display: 'flex', gap: '8px', marginTop: '8px'}}>
+                              <button 
+                                className="btn btn-primary" 
+                                style={{flex: 1}} 
+                                onClick={() => copyToClipboard(cleanPromptForCopy(), `${selectedAI} JSON`)}
+                              >
+                                📋 복사
+                              </button>
+                              {isPromptEdited && (
+                                <button 
+                                  className="btn btn-secondary" 
+                                  onClick={() => { setIsPromptEdited(false); setEditedPrompt(''); }}
+                                >
+                                  ↺ 리셋
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="empty-state">
+                          <div className="empty-icon">🤖</div>
+                          <div className="empty-text">샷을 선택하면<br/>프롬프트가 생성됩니다</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </main>
+
+          <footer className="footer-actions">
+            <div>{step > 1 && <button className="btn btn-ghost" onClick={() => setStep(step - 1)}>← 이전</button>}</div>
+            <div style={{display: 'flex', gap: '12px'}}>
+              {step === 2 && <button className="btn btn-primary" disabled={jsonText.length < 100} onClick={handleParseJSON}>JSON 파싱 →</button>}
+              {step === 3 && <button className="btn btn-secondary" onClick={() => copyToClipboard(JSON.stringify(parsedData, null, 2), '전체 JSON')}>📦 전체 JSON 내보내기</button>}
+            </div>
+          </footer>
+
+          {toast && <div className="toast">✓ {toast}</div>}
+          </>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
