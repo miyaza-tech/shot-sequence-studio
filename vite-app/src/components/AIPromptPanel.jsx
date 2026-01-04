@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
 import SelectWithDesc from './SelectWithDesc';
-import { GUIDE_OPTIONS, generateJSONPrompt, generateCleanPrompt, STYLE_HINTS } from '../constants';
+import { GUIDE_OPTIONS, generateJSONPrompt, generateCleanPrompt, generateImagePromptJSON, generateImagePromptNatural, STYLE_HINTS } from '../constants';
 
 const AI_PLATFORMS = ['runway', 'kling', 'sora', 'pika'];
+const IMAGE_MODES = [
+  { id: 'image_json', label: 'image[json]' },
+  { id: 'image_natural', label: 'image[자연어]' }
+];
 
 function AIPromptPanel({ shot, style, setStyle, onCopy, selectedShots, allShots }) {
   const [selectedAI, setSelectedAI] = useState('runway');
+  const [selectedImageMode, setSelectedImageMode] = useState(null);
   const [editedPrompt, setEditedPrompt] = useState('');
   const [isPromptEdited, setIsPromptEdited] = useState(false);
 
@@ -24,15 +29,44 @@ function AIPromptPanel({ shot, style, setStyle, onCopy, selectedShots, allShots 
     }).join('\n');
   };
 
-  const generatedPromptObj = shot ? generateJSONPrompt[selectedAI](shot, style) : null;
-  const generatedPrompt = formatPromptWithHighlight(generatedPromptObj);
+  // 프롬프트 생성 로직
+  const getGeneratedPrompt = () => {
+    if (!shot) return '';
+    
+    if (selectedImageMode === 'image_json') {
+      const obj = generateImagePromptJSON(shot, style);
+      return formatPromptWithHighlight(obj);
+    } else if (selectedImageMode === 'image_natural') {
+      return generateImagePromptNatural(shot, style);
+    } else {
+      const obj = generateJSONPrompt[selectedAI](shot, style);
+      return formatPromptWithHighlight(obj);
+    }
+  };
+
+  const generatedPrompt = getGeneratedPrompt();
   const jsonPrompt = isPromptEdited ? editedPrompt : generatedPrompt;
 
   // 복사할 때는 하이라이트와 audio_reference 제거
   const cleanPromptForCopy = () => {
     if (isPromptEdited) return editedPrompt;
-    const cleanObj = generateCleanPrompt[selectedAI](shot, style);
-    return JSON.stringify(cleanObj, null, 2);
+    
+    if (selectedImageMode === 'image_json') {
+      const cleanObj = generateImagePromptJSON(shot, style);
+      return JSON.stringify(cleanObj, null, 2);
+    } else if (selectedImageMode === 'image_natural') {
+      return generateImagePromptNatural(shot, style);
+    } else {
+      const cleanObj = generateCleanPrompt[selectedAI](shot, style);
+      return JSON.stringify(cleanObj, null, 2);
+    }
+  };
+
+  // 현재 선택된 모드 이름
+  const getCurrentModeName = () => {
+    if (selectedImageMode === 'image_json') return 'Image JSON';
+    if (selectedImageMode === 'image_natural') return 'Image 자연어';
+    return `${selectedAI} JSON`;
   };
 
   // 선택된 샷들의 프롬프트 일괄 생성 (스타일은 상단에 한번만)
@@ -58,7 +92,7 @@ function AIPromptPanel({ shot, style, setStyle, onCopy, selectedShots, allShots 
   useEffect(() => {
     setIsPromptEdited(false);
     setEditedPrompt('');
-  }, [shot, selectedAI, style]);
+  }, [shot, selectedAI, selectedImageMode, style]);
 
   if (!shot) {
     return (
@@ -95,10 +129,23 @@ function AIPromptPanel({ shot, style, setStyle, onCopy, selectedShots, allShots 
               {AI_PLATFORMS.map(ai => (
                 <button 
                   key={ai} 
-                  className={`ai-btn ${selectedAI === ai ? 'active' : ''}`} 
-                  onClick={() => setSelectedAI(ai)}
+                  className={`ai-btn ${selectedAI === ai && !selectedImageMode ? 'active' : ''}`} 
+                  onClick={() => { setSelectedAI(ai); setSelectedImageMode(null); }}
                 >
                   {ai.charAt(0).toUpperCase() + ai.slice(1)}
+                </button>
+              ))}
+            </div>
+            
+            <div className="detail-section-title" style={{marginTop: '12px'}}>이미지 프롬프트</div>
+            <div className="ai-buttons">
+              {IMAGE_MODES.map(mode => (
+                <button 
+                  key={mode.id} 
+                  className={`ai-btn ${selectedImageMode === mode.id ? 'active' : ''}`} 
+                  onClick={() => setSelectedImageMode(mode.id)}
+                >
+                  {mode.label}
                 </button>
               ))}
             </div>
@@ -133,7 +180,7 @@ function AIPromptPanel({ shot, style, setStyle, onCopy, selectedShots, allShots 
               <button 
                 className="btn btn-primary" 
                 style={{flex: 1}} 
-                onClick={() => onCopy(cleanPromptForCopy(), `${selectedAI} JSON`)}
+                onClick={() => onCopy(cleanPromptForCopy(), getCurrentModeName())}
               >
                 현재 샷 복사
               </button>
