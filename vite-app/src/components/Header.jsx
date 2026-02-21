@@ -17,7 +17,6 @@ const FilmIcon = () => (
 function Header({ 
   step, 
   onSetStep,
-  onLogout, 
   isDark, 
   onToggleTheme,
   currentProject,
@@ -67,7 +66,6 @@ function Header({
         <button className="btn btn-ghost btn-sm" onClick={onToggleTheme}>
           {isDark ? '☀' : '☾'}
         </button>
-        <button className="btn btn-ghost btn-sm" onClick={onLogout}>로그아웃</button>
       </div>
     </header>
   );

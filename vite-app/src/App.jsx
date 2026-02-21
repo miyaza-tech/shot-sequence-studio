@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { 
-  Login, 
   Header, 
   StoryInput, 
   JsonConverter, 
@@ -12,11 +11,6 @@ import { CONVERSION_PROMPT } from './constants';
 import { saveProject as saveToStorage, loadLastProject } from './utils/storage';
 
 function App() {
-  // 로그인 상태
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem('sss_auth') === 'authenticated';
-  });
-  
   // 다크모드 상태
   const [isDark, setIsDark] = useState(() => {
     return localStorage.getItem('sss_theme') === 'dark';
@@ -36,11 +30,6 @@ function App() {
       document.documentElement.setAttribute('data-theme', 'dark');
     }
   }, []);
-  
-  const handleLogout = () => {
-    localStorage.removeItem('sss_auth');
-    setIsLoggedIn(false);
-  };
 
   // 앱 상태
   const [step, setStep] = useState(1);
@@ -190,18 +179,12 @@ function App() {
 
   const conversionPrompt = CONVERSION_PROMPT(storyText);
 
-  // 로그인 전
-  if (!isLoggedIn) {
-    return <Login onLogin={() => setIsLoggedIn(true)} />;
-  }
-
   // 메인 앱
   return (
     <div className="app">
       <Header 
         step={step} 
         onSetStep={setStep}
-        onLogout={handleLogout} 
         isDark={isDark} 
         onToggleTheme={toggleTheme}
         currentProject={currentProject}

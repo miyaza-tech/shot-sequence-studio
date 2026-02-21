@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https: ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Shot Sequence Studio</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -394,86 +396,6 @@
     @keyframes slideUp {
       from { opacity: 0; transform: translateX(-50%) translateY(20px); }
       to { opacity: 1; transform: translateX(-50%) translateY(0); }
-    }
-
-    /* 로그인 화면 */
-    .login-container {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg-primary);
-    }
-
-    .login-box {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 48px 40px;
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-    }
-
-    .login-logo {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-
-    .login-title {
-      font-size: 24px;
-      font-weight: 700;
-      background: var(--gradient-main);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
-    }
-
-    .login-subtitle {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-bottom: 32px;
-    }
-
-    .login-form {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .login-input {
-      width: 100%;
-      padding: 14px 16px;
-      background: var(--bg-primary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      color: var(--text-primary);
-      font-size: 15px;
-      font-family: inherit;
-      text-align: center;
-    }
-
-    .login-input:focus {
-      outline: none;
-      border-color: var(--accent-violet);
-    }
-
-    .login-input::placeholder {
-      color: var(--text-muted);
-    }
-
-    .login-btn {
-      width: 100%;
-      padding: 14px;
-      font-size: 15px;
-      margin-top: 8px;
-    }
-
-    .login-error {
-      color: var(--accent-rose);
-      font-size: 13px;
-      margin-top: 4px;
     }
 
     .empty-state {
@@ -1073,33 +995,6 @@ JSON 코드만 출력하세요.`;
     }
 
     function App() {
-      // 로그인 상태
-      const [isLoggedIn, setIsLoggedIn] = useState(() => {
-        return localStorage.getItem('sss_auth') === 'authenticated';
-      });
-      const [password, setPassword] = useState('');
-      const [loginError, setLoginError] = useState('');
-      
-      const handleLogin = () => {
-        if (password === 'dhWkddk') {
-          localStorage.setItem('sss_auth', 'authenticated');
-          setIsLoggedIn(true);
-          setLoginError('');
-        } else {
-          setLoginError('비밀번호가 틀렸습니다');
-        }
-      };
-      
-      const handleLogout = () => {
-        localStorage.removeItem('sss_auth');
-        setIsLoggedIn(false);
-        setPassword('');
-      };
-      
-      const handleKeyPress = (e) => {
-        if (e.key === 'Enter') handleLogin();
-      };
-
       const [step, setStep] = useState(1);
       const [storyText, setStoryText] = useState('');
       const [jsonText, setJsonText] = useState('');
@@ -1184,35 +1079,6 @@ JSON 코드만 출력하세요.`;
 
       return (
         <div className="app">
-          {!isLoggedIn ? (
-            // 로그인 화면
-            <div className="login-container">
-              <div className="login-box">
-                <div className="login-logo">
-                  <div className="logo-icon" style={{width: '48px', height: '48px', fontSize: '24px'}}>🎬</div>
-                </div>
-                <h1 className="login-title">Shot Sequence Studio</h1>
-                <p className="login-subtitle">관리자 로그인이 필요합니다</p>
-                
-                <div className="login-form">
-                  <input
-                    type="password"
-                    className="login-input"
-                    placeholder="비밀번호 입력"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    autoFocus
-                  />
-                  {loginError && <div className="login-error">{loginError}</div>}
-                  <button className="btn btn-primary login-btn" onClick={handleLogin}>
-                    로그인
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-          // 메인 앱
           <>
           <header className="header">
             <div className="logo">
@@ -1232,7 +1098,6 @@ JSON 코드만 출력하세요.`;
                 <span className="step-number">3</span><span>프롬프트 생성</span>
               </div>
             </div>
-            <button className="btn btn-ghost btn-sm" onClick={handleLogout}>로그아웃</button>
           </header>
 
           <main className="main">
@@ -1459,7 +1324,6 @@ JSON 코드만 출력하세요.`;
 
           {toast && <div className="toast">✓ {toast}</div>}
           </>
-          )}
         </div>
       );
     }
